@@ -8,6 +8,8 @@ function App() {
   const [searchTerm, setSearchTerm] =
   useState("");
   const [messages, setMessages] = useState([]);
+  const [roomMessages, setRoomMessages] =
+  useState({});
   const [room, setRoom] = useState("general");
   const [channels, setChannels] =
   useState([]);
@@ -18,17 +20,29 @@ function App() {
   const [password, setPassword] = useState("");
   const [user, setUser] = useState(null);
   const [displayName, setDisplayName] =
-  useState("");
+    useState("");
   const [description, setDescription] =
     useState("");
   const [profilePic, setProfilePic] =
     useState("");
+  const [showProfile, setShowProfile] =
+    useState(false);
+  const [darkMode, setDarkMode] =
+    useState(true);
+  const [showSearch, setShowSearch] =
+    useState(false);
 
   useEffect(() => {
     socket.emit("join_room", "general");
 
     socket.on("receive_message", (data) => {
-      setMessages((prev) => [...prev, data]);
+      setRoomMessages((prev) => ({
+        ...prev,
+        [data.room]: [
+          ...(prev[data.room] || []),
+          data
+        ]
+      }));
     });
 
     socket.on("all_channels", (data) => {
@@ -82,7 +96,6 @@ function App() {
   }
 };
 
-
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
 
@@ -97,11 +110,9 @@ function App() {
     reader.readAsDataURL(file);
   };
 
-
   const logout = () => {
     setUser(null);
   };
-
 
   const updateProfile = async () => {
     try {
@@ -136,7 +147,6 @@ function App() {
     }
   };
 
-
   const createChannel = () => {
     const trimmedChannel =
       newChannel.trim().toLowerCase();
@@ -153,14 +163,14 @@ function App() {
     setNewChannel("");
   };
 
-  const joinRoom = (roomName) => {
+const joinRoom = (roomName) => {
   setRoom(roomName);
+
   socket.emit("join_room", roomName);
-  setMessages([]);
 };
 
-
-  const filteredMessages = messages.filter(
+  const filteredMessages =
+    (roomMessages[room] || []).filter(
     (msg) =>
       msg.text
         .toLowerCase()
@@ -188,16 +198,74 @@ function App() {
     setMessage("");
   };
 
-
-  if (!user) {
+if (!user) {
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>
-        {isLogin ? "Login" : "Register"}
-      </h1>
+    <div
+      style={{
+        height: "100dvh",
+        background: darkMode
+          ? "#020617"
+          : "#e2e8f0",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "20px",
+        fontFamily:
+          "'Inter', Arial, sans-serif"
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "420px",
+          background: darkMode
+            ? "#0f172a"
+            : "white",
+          padding: "40px",
+          borderRadius: "28px",
+          boxShadow: darkMode
+            ? "0 10px 40px rgba(0,0,0,0.45)"
+            : "0 10px 40px rgba(0,0,0,0.08)",
+          border: darkMode
+            ? "1px solid #1e293b"
+            : "1px solid #ddd"
+        }}
+      >
+        <h1
+          style={{
+            textAlign: "center",
+            marginBottom: "10px",
+            color: darkMode
+              ? "white"
+              : "#0f172a"
+          }}
+        >
+          Chatter 💬
+        </h1>
 
-      <form onSubmit={handleAuth}>
-        <div>
+        <p
+          style={{
+            textAlign: "center",
+            opacity: 0.7,
+            marginBottom: "30px",
+            color: darkMode
+              ? "white"
+              : "#0f172a"
+          }}
+        >
+          {isLogin
+            ? "Welcome back"
+            : "Create your account"}
+        </p>
+
+        <form
+          onSubmit={handleAuth}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px"
+          }}
+        >
           <input
             type="text"
             placeholder="Username"
@@ -205,12 +273,20 @@ function App() {
             onChange={(e) =>
               setUsername(e.target.value)
             }
+            style={{
+              padding: "14px",
+              borderRadius: "14px",
+              border: "none",
+              outline: "none",
+              background: darkMode
+                ? "#1e293b"
+                : "#f1f5f9",
+              color: darkMode
+                ? "white"
+                : "black"
+            }}
           />
-        </div>
 
-        <br />
-
-        <div>
           <input
             type="password"
             placeholder="Password"
@@ -218,171 +294,650 @@ function App() {
             onChange={(e) =>
               setPassword(e.target.value)
             }
+            style={{
+              padding: "14px",
+              borderRadius: "14px",
+              border: "none",
+              outline: "none",
+              background: darkMode
+                ? "#1e293b"
+                : "#f1f5f9",
+              color: darkMode
+                ? "white"
+                : "black"
+            }}
           />
-        </div>
 
-        <br />
+          <button
+            type="submit"
+            style={{
+              padding: "14px",
+              borderRadius: "16px",
+              border: "none",
+              background:
+                "linear-gradient(135deg,#3b82f6,#2563eb)",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "15px",
+              cursor: "pointer",
+              boxShadow:
+                "0 8px 20px rgba(59,130,246,0.4)"
+            }}
+          >
+            {isLogin
+              ? "Login"
+              : "Register"}
+          </button>
+        </form>
 
-        <button type="submit">
-          {isLogin ? "Login" : "Register"}
+        <button
+          onClick={() =>
+            setIsLogin(!isLogin)
+          }
+          style={{
+            marginTop: "18px",
+            width: "100%",
+            padding: "12px",
+            borderRadius: "14px",
+            border: "none",
+            background: darkMode
+              ? "#1e293b"
+              : "#f1f5f9",
+            color: darkMode
+              ? "white"
+              : "#0f172a",
+            cursor: "pointer"
+          }}
+        >
+          Switch to{" "}
+          {isLogin
+            ? "Register"
+            : "Login"}
         </button>
-      </form>
-
-      <br />
-
-      <button
-        onClick={() =>
-          setIsLogin(!isLogin)
-        }
-      >
-        Switch to{" "}
-        {isLogin ? "Register" : "Login"}
-      </button>
+      </div>
     </div>
   );
 }
 
-
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Real-Time Chat App</h1>
-
-      <button onClick={logout}>
-  Logout
-</button>
-
-<hr />
-
-<h3>Profile</h3>
-
-<img
-  src={
-    profilePic
-      ? profilePic
-      : "https://via.placeholder.com/100"
-  }
-  alt="profile"
-  width="100"
-  height="100"
-  style={{
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "2px solid gray"
-  }}
-/>
-
-<div>
-  <input
-    type="text"
-    placeholder="Display Name"
-    value={displayName}
-    onChange={(e) =>
-      setDisplayName(e.target.value)
-    }
-  />
-</div>
-
-<br />
-
-<div>
-  <input
-    type="text"
-    placeholder="Description"
-    value={description}
-    onChange={(e) =>
-      setDescription(e.target.value)
-    }
-  />
-</div>
-
-<br />
-
-<div>
-
-  <div>
-  <input
-    type="file"
-    accept="image/*"
-    onChange={handleImageUpload}
-  />
-</div>
-
-<br />
-  <input
-    type="text"
-    placeholder="Profile Picture URL"
-    value={profilePic}
-    onChange={(e) =>
-      setProfilePic(e.target.value)
-    }
-  />
-</div>
-
-<br />
-
-<button onClick={updateProfile}>
-  Save Profile
-</button>
-
-<hr />
-
-
-      <h2>Current Room: {room}</h2>
-
-      <div style={{ marginBottom: "10px" }}>
-        <h3>Channels</h3>
-
-        {channels.map((channel) => (
-          <button
-            key={channel}
-            onClick={() => joinRoom(channel)}
-            style={{
-              marginRight: "8px",
-              marginBottom: "8px"
-            }}
-          >
-            {channel}
-          </button>
-        ))}
-
-        <div style={{ marginTop: "10px" }}>
-          <input
-            type="text"
-            placeholder="New channel"
-            value={newChannel}
-            onChange={(e) =>
-              setNewChannel(e.target.value)
+    <div
+      style={{
+        height: "100dvh",
+        overflow: "hidden",
+        position: "fixed",
+        top: 0,
+        left: "50%",
+        transform: "translateX(-50%)",
+        width: "100%",
+        maxWidth: "1400px",
+        background: darkMode
+          ? "#020617"
+          : "#e2e8f0",
+        color: darkMode
+          ? "white"
+          : "#0f172a",
+        padding: "15px",
+        display: "flex",
+        flexDirection: "column",
+        transition: "0.3s",
+        fontFamily:
+          "'Inter', Arial, sans-serif"
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "14px 18px",
+          borderRadius: "18px",
+          background: darkMode
+            ? "#0f172a"
+            : "white",
+          boxShadow: darkMode
+            ? "0 4px 20px rgba(0,0,0,0.3)"
+            : "0 4px 20px rgba(0,0,0,0.08)",
+          marginBottom: "15px",
+          flexWrap: "wrap",
+          gap: "12px",
+          border: darkMode
+            ? "1px solid #1e293b"
+            : "1px solid #ddd"
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px"
+          }}
+        >
+          <img
+            src={
+              profilePic ||
+              "https://via.placeholder.com/50"
             }
+            alt="profile"
+            width="50"
+            height="50"
+            style={{
+              borderRadius: "50%",
+              objectFit: "cover",
+              border:
+                "3px solid #3b82f6"
+            }}
           />
 
-          <button onClick={createChannel}>
-            Create
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "1.5rem",
+                color: darkMode
+                  ? "white"
+                  : "#0f172a"
+              }}
+            >
+              Chatter 💬
+            </h1>
+
+            <small
+              style={{
+                opacity: 0.7
+              }}
+            >
+              {displayName || username}
+            </small>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            flexWrap: "wrap"
+          }}
+        >
+          <button
+            onClick={() =>
+              setShowSearch(!showSearch)
+            }
+            style={{
+              padding: "10px 14px",
+              borderRadius: "12px",
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            🔍
+          </button>
+
+          <button
+            onClick={() =>
+              setDarkMode(!darkMode)
+            }
+            style={{
+              padding: "10px 14px",
+              borderRadius: "12px",
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+
+          <button
+            onClick={() =>
+              setShowProfile(true)
+            }
+            style={{
+              padding: "10px 14px",
+              borderRadius: "12px",
+              border: "none",
+              background: "#3b82f6",
+              color: "white",
+              cursor: "pointer"
+            }}
+          >
+            Profile
+          </button>
+
+          <button
+            onClick={logout}
+            style={{
+              padding: "10px 14px",
+              borderRadius: "12px",
+              border: "none",
+              background: "#ef4444",
+              color: "white",
+              cursor: "pointer"
+            }}
+          >
+            Logout
           </button>
         </div>
       </div>
 
 
+      {showProfile && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background:
+                "rgba(0,0,0,0.6)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000
+            }}
+          >
+            <div
+              style={{
+                background: darkMode
+                  ? "#0f172a"
+                  : "white",
+                padding: "35px",
+                borderRadius: "28px",
+                width: "92%",
+                maxWidth: "420px",
+                boxShadow:
+                  "0 20px 60px rgba(0,0,0,0.45)",
+                border: darkMode
+                  ? "1px solid #1e293b"
+                  : "1px solid #ddd",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "14px"
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}
+              >
+                <h2
+                  style={{
+                    margin: 0,
+                    color: darkMode
+                      ? "white"
+                      : "#0f172a"
+                  }}
+                >
+                  Edit Profile
+                </h2>
+
+                <button
+                  onClick={() =>
+                    setShowProfile(false)
+                  }
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    fontSize: "22px",
+                    cursor: "pointer",
+                    color: darkMode
+                      ? "white"
+                      : "#0f172a"
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              <img
+                src={
+                  profilePic ||
+                  "https://via.placeholder.com/120"
+                }
+                alt="profile"
+                width="120"
+                height="120"
+                style={{
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border:
+                    "4px solid #3b82f6",
+                  boxShadow:
+                    "0 8px 25px rgba(59,130,246,0.4)"
+                }}
+              />
+
+              <input
+                type="text"
+                placeholder="Display Name"
+                value={displayName}
+                onChange={(e) =>
+                  setDisplayName(
+                    e.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  borderRadius: "14px",
+                  border: "none",
+                  outline: "none",
+                  background: darkMode
+                    ? "#1e293b"
+                    : "#f1f5f9",
+                  color: darkMode
+                    ? "white"
+                    : "black"
+                }}
+              />
+
+              <textarea
+                placeholder="Bio / Description"
+                value={description}
+                onChange={(e) =>
+                  setDescription(
+                    e.target.value
+                  )
+                }
+                rows={3}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  borderRadius: "14px",
+                  border: "none",
+                  outline: "none",
+                  resize: "none",
+                  background: darkMode
+                    ? "#1e293b"
+                    : "#f1f5f9",
+                  color: darkMode
+                    ? "white"
+                    : "black"
+                }}
+              />
+
+              <div
+                style={{
+                  width: "100%"
+                }}
+              >
+                <label
+                  style={{
+                    fontSize: "14px",
+                    opacity: 0.7
+                  }}
+                >
+                  Upload Image
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{
+                    marginTop: "8px",
+                    width: "100%"
+                  }}
+                />
+              </div>
+
+              <input
+                type="text"
+                placeholder="Or paste image URL"
+                value={profilePic}
+                onChange={(e) =>
+                  setProfilePic(
+                    e.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  borderRadius: "14px",
+                  border: "none",
+                  outline: "none",
+                  background: darkMode
+                    ? "#1e293b"
+                    : "#f1f5f9",
+                  color: darkMode
+                    ? "white"
+                    : "black"
+                }}
+              />
+
+              <button
+                onClick={() => {
+                  updateProfile();
+                  setShowProfile(false);
+                }}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  borderRadius: "16px",
+                  border: "none",
+                  background:
+                    "linear-gradient(135deg,#3b82f6,#2563eb)",
+                  color: "white",
+                  fontWeight: "bold",
+                  fontSize: "15px",
+                  cursor: "pointer",
+                  boxShadow:
+                    "0 8px 20px rgba(59,130,246,0.4)"
+                }}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        )}
+
+
+      <h2
+        style={{
+          color: darkMode
+            ? "white"
+            : "#0f172a",
+          marginBottom: "12px"
+        }}
+      >
+         #{room}
+      </h2>
+
+<div
+    style={{
+      background: darkMode
+        ? "#0f172a"
+        : "white",
+      padding: window.innerWidth < 768
+        ? "10px"
+        : "16px",
+      borderRadius: "18px",
+      marginBottom: "10px",
+      border: darkMode
+        ? "1px solid #1e293b"
+        : "1px solid #ddd",
+      flexShrink: 0
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "10px"
+      }}
+    >
+      <h3
+        style={{
+          margin: 0,
+          fontSize:
+            window.innerWidth < 768
+              ? "14px"
+              : "18px",
+          color: darkMode
+            ? "white"
+            : "#0f172a"
+        }}
+      >
+        Channels
+      </h3>
+    </div>
+
+    <div
+      style={{
+        display: "flex",
+        gap: "8px",
+        overflowX: "auto",
+        paddingBottom: "6px",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none"
+      }}
+    >
+      {channels.map((channel) => (
+        <button
+          key={channel}
+          onClick={() => joinRoom(channel)}
+          style={{
+            padding:
+              window.innerWidth < 768
+                ? "8px 12px"
+                : "10px 14px",
+            borderRadius: "999px",
+            border: "none",
+            background:
+              room === channel
+                ? "#3b82f6"
+                : darkMode
+                ? "#1e293b"
+                : "#e2e8f0",
+            color:
+              darkMode
+                ? "white"
+                : "#0f172a",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            fontSize:
+              window.innerWidth < 768
+                ? "13px"
+                : "14px",
+            flexShrink: 0,
+            transition: "0.2s"
+          }}
+        >
+          #{channel}
+        </button>
+      ))}
+    </div>
+
+    <div
+      style={{
+        display: "flex",
+        gap: "8px",
+        marginTop: "10px"
+      }}
+    >
       <input
         type="text"
-        placeholder="Search messages..."
-        value={searchTerm}
+        placeholder="New channel"
+        value={newChannel}
         onChange={(e) =>
-          setSearchTerm(e.target.value)
+          setNewChannel(e.target.value)
         }
         style={{
-          width: "100%",
-          padding: "8px",
-          marginBottom: "10px"
+          flex: 1,
+          padding:
+            window.innerWidth < 768
+              ? "10px"
+              : "12px",
+          borderRadius: "12px",
+          border: "none",
+          outline: "none",
+          background: darkMode
+            ? "#1e293b"
+            : "#f1f5f9",
+          color: darkMode
+            ? "white"
+            : "black",
+          fontSize:
+            window.innerWidth < 768
+              ? "13px"
+              : "14px"
         }}
       />
+
+      <button
+        onClick={createChannel}
+        style={{
+          padding:
+            window.innerWidth < 768
+              ? "10px 14px"
+              : "12px 18px",
+          borderRadius: "12px",
+          border: "none",
+          background:
+            "linear-gradient(135deg,#3b82f6,#2563eb)",
+          color: "white",
+          fontWeight: "bold",
+          cursor: "pointer",
+          flexShrink: 0
+        }}
+      >
+        +
+      </button>
+    </div>
+</div>
+
+      {showSearch && (
+        <div
+          style={{
+            marginBottom: "10px",
+            display: "flex",
+            justifyContent: "flex-end"
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) =>
+              setSearchTerm(e.target.value)
+            }
+            style={{
+              width: "220px",
+              padding: "10px",
+              borderRadius: "12px",
+              border: "none",
+              outline: "none",
+              background: darkMode
+                ? "#1e293b"
+                : "white",
+              color: darkMode
+                ? "white"
+                : "black"
+            }}
+          />
+        </div>
+      )}
 
       <div
         style={{
           border: "1px solid gray",
-          height: "300px",
-          padding: "10px",
+          flex: 1,
+          minHeight: "300px",
+          background: darkMode
+            ? "#1e293b"
+            : "white",
+          borderRadius: "12px",
+          padding: "18px",
           overflowY: "scroll",
-          marginBottom: "10px"
+          marginBottom: "90px",
+          scrollbarWidth: "thin",
+          scrollbarColor: darkMode
+            ? "#3b82f6 #1e293b"
+            : "#3b82f6 #cbd5e1",
         }}
       >
         {filteredMessages.map((msg, index) => (
@@ -429,16 +984,85 @@ function App() {
         ))}
       </div>
 
-      <input
-        type="text"
-        placeholder="Type message..."
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
+      <div
+        style={{
+          position: "sticky",
+          bottom: "0",
+          paddingTop: "15px",
+          paddingBottom: "10px",
+          background: darkMode
+            ? "#0f172a"
+            : "#f1f5f9",
+          zIndex: 100
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            background: darkMode
+              ? "#1e293b"
+              : "white",
+            padding: "12px",
+            borderRadius: "18px",
+            boxShadow: darkMode
+              ? "0 0 15px rgba(0,0,0,0.4)"
+              : "0 0 15px rgba(0,0,0,0.1)",
+            border: darkMode
+              ? "1px solid #334155"
+              : "1px solid #ddd"
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Type a message..."
+            value={message}
+            onChange={(e) =>
+              setMessage(e.target.value)
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                sendMessage();
+              }
+            }}
+            style={{
+              flex: 1,
+              padding: "14px",
+              borderRadius: "12px",
+              border: "none",
+              outline: "none",
+              background: darkMode
+                ? "#0f172a"
+                : "#f8fafc",
+              color: darkMode
+                ? "white"
+                : "black",
+              fontSize: "15px"
+            }}
+          />
 
-      <button onClick={sendMessage}>
-        Send
-      </button>
+          <button
+            onClick={sendMessage}
+            style={{
+              padding: "14px 20px",
+              borderRadius: "14px",
+              border: "none",
+              background:
+                "linear-gradient(135deg, #3b82f6, #2563eb)",
+              color: "white",
+              fontWeight: "bold",
+              cursor: "pointer",
+              transition: "0.2s",
+              whiteSpace: "nowrap",
+              boxShadow:
+                "0 4px 10px rgba(59,130,246,0.4)"
+            }}
+          >
+            Send 🚀
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
