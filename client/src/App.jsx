@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import logo from "./assets/logo.png";
 
 const socket = io(import.meta.env.VITE_API_URL);
 
@@ -240,8 +241,18 @@ if (!user) {
               : "#0f172a"
           }}
         >
-          Chatter 💬
+          Chater <img
+              src={logo}
+              alt="Chatter Logo"
+              width="42"
+              height="42"
+              style={{
+                objectFit: "contain"
+              }}
+            />
         </h1>
+
+        
 
         <p
           style={{
@@ -428,26 +439,46 @@ if (!user) {
             }}
           />
 
-          <div>
-            <h1
-              style={{
-                margin: 0,
-                fontSize: "1.5rem",
-                color: darkMode
-                  ? "white"
-                  : "#0f172a"
-              }}
-            >
-              Chatter 💬
-            </h1>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px"
+            }}
+          >
+            
 
-            <small
+            <div>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "1.5rem",
+                  color: darkMode
+                    ? "white"
+                    : "#0f172a"
+                }}
+              >
+                Chater
+              </h1>
+
+              <small
+                style={{
+                  opacity: 0.7
+                }}
+              >
+                {displayName || username}
+              </small>
+            </div>
+
+            <img
+              src={logo}
+              alt="Chater Logo"
+              width="42"
+              height="42"
               style={{
-                opacity: 0.7
+                objectFit: "contain"
               }}
-            >
-              {displayName || username}
-            </small>
+            />
           </div>
         </div>
 
